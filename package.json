@@ -6,14 +6,22 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/lib/**/*.test.ts",
+    "ingest": "tsx scripts/ingest.ts",
+    "score": "tsx scripts/ingest.ts --stages score",
+    "enrich": "tsx scripts/ingest.ts --stages enrich",
+    "db:status": "tsx scripts/status.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "cytoscape": "^3.34.1",
     "cytoscape-dagre": "^4.0.0",
+    "framer-motion": "^13.1.1",
     "lucide-react": "^1.33.0",
     "neo4j-driver": "^6.2.0",
     "next": "16.3.2",
