@@ -214,8 +214,11 @@ export function GraphCanvas3D({
           onNodeClick={handleNodeClick}
           onLinkClick={handleLinkClick}
           onBackgroundClick={handleBackgroundClick}
-          // Highlight selected node
-          nodeThreeObject={(node: any) => {
+          // Highlight selected node.
+          // Cast: react-force-graph treats a falsy return as "use the default
+          // renderer for this node", but its published types only model an
+          // Object3D return, so the sentinel does not typecheck without it.
+          nodeThreeObject={((node: any) => {
             if (node.id === selectedId) {
               const geometry = new THREE.SphereGeometry(Math.cbrt(node.val)*5, 16, 16);
               const material = new THREE.MeshBasicMaterial({ color: '#38bdf8', wireframe: true });
@@ -234,8 +237,8 @@ export function GraphCanvas3D({
                const material = new THREE.MeshLambertMaterial({ color: node.color, emissive: node.color, emissiveIntensity: 0.5 });
                return new THREE.Mesh(geometry, material);
             }
-            return false; // use default node renderer
-          }}
+            return false; // falsy => default node renderer
+          }) as unknown as (node: object) => THREE.Object3D}
           enableNodeDrag={false}
         />
       )}
