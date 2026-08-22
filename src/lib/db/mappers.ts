@@ -122,6 +122,7 @@ export function paperNodeToProps(paper: PaperNode): {
   retractionNature: string | null;
   retractionNoticeUrl: string | null;
   retractionSource: string | null;
+  authors: Author[];
 } {
   return {
     openalexId: paper.id,
@@ -149,5 +150,6 @@ export function paperNodeToProps(paper: PaperNode): {
     retractionNature: paper.retraction?.nature ?? null,
     retractionNoticeUrl: paper.retraction?.noticeUrl ?? null,
     retractionSource: paper.retraction?.source ?? null,
+    authors: paper.authors,
   };
 }

@@ -22,10 +22,9 @@ directly, and whether the citing authors could have known at the time.
 - **Bibliography checking** — upload a `.bib`, `.ris`, DOI list or pasted
   reference list and get every entry checked, including references that are clean
   themselves but rest on flagged work.
-- **Graph visualisation** with a timeline layout (y-axis = publication year), so
-  contamination is visibly travelling forward through the literature, and
-  post-notice citations are drawn as dashed red edges.
-- **Exports** — CSV, GraphML (Gephi/Cytoscape), BibTeX, RIS and full JSON.
+- **Graph visualisation** offering both a classic 2D timeline layout (y-axis = publication year) and an immersive **3D Galaxy WebGL** layout. Features include shortest-path highlighting (Trace to Source), time-lapse animations of contamination spread, and a distinct **Author Network** mode for tracing co-author clusters.
+- **AI Citation Context Analysis** using a local NLP pipeline to identify the exact sentiment and context of citations (e.g. refutational vs. supporting).
+- **Exports** — CSV, GraphML (Gephi/Cytoscape), BibTeX, RIS, full JSON, and comprehensive **PDF Reports** capturing the visualisations and analysis.
 - **A public JSON API** with validation, rate limiting and cache headers.
 
 ## Quick start

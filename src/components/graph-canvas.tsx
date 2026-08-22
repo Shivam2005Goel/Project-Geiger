@@ -10,7 +10,7 @@ import { BAND, STATUS, bandFor, nodeColours, nodeSize } from '@/lib/ui/presentat
 
 cytoscape.use(dagre);
 
-export type LayoutMode = 'timeline' | 'hierarchy' | 'organic';
+export type LayoutMode = 'timeline' | 'hierarchy' | 'organic' | '3d';
 
 interface GraphCanvasProps {
   graph: PaperGraph;

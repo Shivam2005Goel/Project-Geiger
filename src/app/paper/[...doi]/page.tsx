@@ -9,9 +9,12 @@ import {
 } from 'lucide-react';
 
 import { GraphCanvas, type LayoutMode } from '@/components/graph-canvas';
+import { GraphCanvas3D } from '@/components/graph-canvas-3d';
 import { PaperDetail } from '@/components/paper-detail';
 import { GlobalSearch } from '@/components/global-search';
 import { Button } from '@/components/ui/button';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,6 +51,7 @@ export default function PaperViewPage() {
   const [selected, setSelected] = useState<PaperNode | null>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [traceMode, setTraceMode] = useState(false);
+  const [authorMode, setAuthorMode] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
@@ -115,7 +119,33 @@ export default function PaperViewPage() {
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
-  const download = (format: ExportFormat) => {
+  const download = async (format: ExportFormat | 'pdf') => {
+    if (format === 'pdf') {
+      const container = document.getElementById('report-container');
+      if (!container) return;
+      
+      try {
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          backgroundColor: '#020617', // Match slate-950
+          ignoreElements: (el: Element) => el.classList.contains('no-print')
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`geiger-report-${doi.replace(/\//g, '-')}.pdf`);
+      } catch (err) {
+        console.error('Failed to generate PDF', err);
+      }
+      return;
+    }
+
     const query = new URLSearchParams({
       format,
       direction: filters.direction,
@@ -182,14 +212,16 @@ export default function PaperViewPage() {
         />
       )}
 
-      {root && <PaperHeader paper={root} />}
+      {root && (
+        <div id="report-container" className="flex min-h-0 flex-1 flex-col bg-slate-950">
+          <PaperHeader paper={root} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-        {loading ? (
-          <LoadingState />
-        ) : error ? (
-          <ErrorState error={error} onRetry={retry} />
-        ) : graph ? (
+          <main className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+            {loading ? (
+              <LoadingState />
+            ) : error ? (
+              <ErrorState error={error} onRetry={retry} />
+            ) : graph ? (
           <>
             <StatBar
               total={graph.nodes.length}
@@ -201,7 +233,7 @@ export default function PaperViewPage() {
             />
 
             <Tabs defaultValue="graph" className="flex min-h-0 flex-1 flex-col">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 no-print">
                 <TabsList className="border border-white/10 bg-black/40">
                   <TabsTrigger value="graph" className="data-[state=active]:bg-sky-600">
                     <Network className="mr-1.5 h-3.5 w-3.5" />
@@ -240,26 +272,45 @@ export default function PaperViewPage() {
                       />
                       Trace to Source
                     </label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-indigo-400">
+                      <input
+                        type="checkbox"
+                        checked={authorMode}
+                        onChange={(e) => setAuthorMode(e.target.checked)}
+                        className="accent-indigo-500"
+                      />
+                      Author Network
+                    </label>
                   </div>
               </div>
 
               <TabsContent
                 value="graph"
-                className="m-0 min-h-0 flex-1 overflow-hidden rounded-lg border border-white/10 bg-black/40 data-[state=active]:flex"
+                className="m-0 min-h-0 flex-1 overflow-hidden rounded-lg border border-white/10 bg-black/40"
               >
-                <GraphCanvas
-                  graph={graph}
-                  layout={layout}
-                  onSelect={setSelected}
-                  selectedId={selected?.id ?? null}
-                  focusMode={focusMode}
-                  traceMode={traceMode}
-                />
+                {layout === '3d' ? (
+                  <GraphCanvas3D
+                    graph={graph}
+                    onSelect={setSelected}
+                    selectedId={selected?.id ?? null}
+                    focusMode={focusMode}
+                    authorMode={authorMode}
+                  />
+                ) : (
+                  <GraphCanvas
+                    graph={graph}
+                    layout={layout}
+                    onSelect={setSelected}
+                    selectedId={selected?.id ?? null}
+                    focusMode={focusMode}
+                    traceMode={traceMode}
+                  />
+                )}
               </TabsContent>
 
               <TabsContent
                 value="table"
-                className="m-0 min-h-0 flex-1 overflow-hidden rounded-lg border border-white/10 bg-black/40 data-[state=active]:flex"
+                className="m-0 min-h-0 flex-1 overflow-hidden rounded-lg border border-white/10 bg-black/40"
               >
                 <PaperTable
                   nodes={graph.nodes}
@@ -271,6 +322,8 @@ export default function PaperViewPage() {
           </>
         ) : null}
       </main>
+      </div>
+      )}
 
       <PaperDetail
         key={selected?.id ?? 'none'}
@@ -420,6 +473,7 @@ function LayoutPicker({
     { value: 'timeline', label: 'Timeline', hint: 'Vertical position is publication year' },
     { value: 'hierarchy', label: 'Hierarchy', hint: 'Layered by citation depth' },
     { value: 'organic', label: 'Organic', hint: 'Force-directed clustering' },
+    { value: '3d', label: '3D Galaxy', hint: 'WebGL Force-directed 3D space' },
   ];
 
   return (
@@ -542,7 +596,7 @@ function Field({
 
 function ExportMenu({
   onSelect, disabled,
-}: { onSelect: (f: ExportFormat) => void; disabled: boolean }) {
+}: { onSelect: (f: ExportFormat | 'pdf') => void; disabled: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -562,6 +616,12 @@ function ExportMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-1 w-60 overflow-hidden rounded-md border border-white/10 bg-slate-950 shadow-xl">
+            <button
+              onClick={() => { onSelect('pdf'); setOpen(false); }}
+              className="block w-full px-3 py-2 text-left text-xs text-sky-300 font-medium hover:bg-white/5 border-b border-white/5"
+            >
+              Download PDF Report
+            </button>
             {(Object.keys(EXPORT_META) as ExportFormat[]).map((format) => (
               <button
                 key={format}
@@ -599,7 +659,7 @@ function PaperTable({
   }, [nodes, rootId, sortKey]);
 
   return (
-    <div className="w-full overflow-auto">
+    <div className="h-full w-full overflow-auto">
       <Table>
         <TableHeader className="sticky top-0 z-10 bg-slate-950">
           <TableRow className="border-white/10 hover:bg-transparent">

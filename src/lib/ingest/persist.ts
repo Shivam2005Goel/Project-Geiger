@@ -73,6 +73,13 @@ export async function persistPapers(papers: PaperNode[]): Promise<number> {
               p.retractionReasons = CASE
                 WHEN size(row.retractionReasons) > 0 THEN row.retractionReasons
                 ELSE coalesce(p.retractionReasons, []) END
+                
+          FOREACH (author IN coalesce(row.authors, []) |
+             MERGE (a:Author {id: coalesce(author.id, author.name)})
+             SET a.name = author.name,
+                 a.orcid = author.orcid
+             MERGE (a)-[:AUTHORED]->(p)
+          )
           `,
           { rows: batch },
         ),
