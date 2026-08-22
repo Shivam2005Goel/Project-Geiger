@@ -13,18 +13,18 @@ let driver: Driver | null = null;
 export function getDriver(): Driver {
   if (driver) return driver;
 
-  const uri = process.env.NEO4J_URI;
-  const user = process.env.NEO4J_USERNAME;
-  const password = process.env.NEO4J_PASSWORD;
+  const uri = process.env.COGNODB_URI;
+  const user = process.env.COGNODB_USERNAME;
+  const password = process.env.COGNODB_PASSWORD;
 
   if (!uri || !user || !password) {
     throw new Error(
-      'Neo4j credentials missing. Set NEO4J_URI, NEO4J_USERNAME and NEO4J_PASSWORD in .env',
+      'CognoDB credentials missing. Set COGNODB_URI, COGNODB_USERNAME and COGNODB_PASSWORD in .env',
     );
   }
 
   driver = neo4j.driver(uri, neo4j.auth.basic(user, password), {
-    maxConnectionPoolSize: Number(process.env.NEO4J_POOL_SIZE ?? 25),
+    maxConnectionPoolSize: Number(process.env.COGNODB_POOL_SIZE ?? 25),
     connectionAcquisitionTimeout: 30_000,
     // Aura drops idle connections; recycling below that window avoids handing
     // out a socket the server has already closed.
@@ -41,7 +41,7 @@ export function getDriver(): Driver {
 
 /** Database name, for Aura instances that host more than the default. */
 export function databaseName(): string | undefined {
-  return process.env.NEO4J_DATABASE || undefined;
+  return process.env.COGNODB_DATABASE || undefined;
 }
 
 export function getSession(mode: SessionMode = neo4j.session.READ): Session {
