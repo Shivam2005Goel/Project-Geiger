@@ -10,7 +10,7 @@ of it happened *after* the retraction notice was published.
 ![Next.js](https://img.shields.io/badge/Next.js-16.3-000000?logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![Neo4j](https://img.shields.io/badge/Neo4j-6.2-4581C3?logo=neo4j&logoColor=white)
+![CognoDB](https://img.shields.io/badge/CognoDB-6.2-4581C3)
 ![Tests](https://img.shields.io/badge/tests-108%20passing-3fb950)
 
 </div>
@@ -131,7 +131,7 @@ contamination band, and a legend is always on screen.
 | **Language** | TypeScript 5 (strict) | The scoring model is the product; types keep it honest |
 | **UI** | React 19.2, Tailwind CSS v4 | |
 | **Components** | shadcn-style on `@base-ui/react`, `lucide-react`, `framer-motion`, `cmdk` | Accessible primitives, command palette |
-| **Database** | Neo4j 5+ via `neo4j-driver` 6.2 | Citation data is a graph; variable-depth traversal is the core query |
+| **Database** | CognoDB (Bolt 5.0-5.4) via `neo4j-driver` 6.2 | Citation data is a graph; variable-depth traversal is the core query |
 | **2D graph** | Cytoscape 3.34 + `cytoscape-dagre` | Mature layout engine, custom timeline layout on top |
 | **3D graph** | `react-force-graph-3d` + Three.js 0.185 | WebGL for large neighbourhoods |
 | **Export** | `html2canvas`, `jsPDF` | Client-side PDF reports |
@@ -145,12 +145,12 @@ contamination band, and a legend is always on screen.
 ### Prerequisites
 
 - **Node.js 20.9+** (developed on 22.x)
-- **A Neo4j database** — [Neo4j Aura](https://neo4j.com/cloud/aura/) free tier is enough,
+- **A CognoDB database** — [CognoDB Cloud](https://console.cognodb.com/signup) free tier is enough,
   or run one locally:
 
   ```bash
   docker run -p 7474:7474 -p 7687:7687 \
-    -e NEO4J_AUTH=neo4j/yourpassword neo4j:5
+    -e COGNODB_AUTH=cognodb/yourpassword cognodb:latest
   ```
 
 - **An email address you monitor** — OpenAlex and Crossref both operate a "polite pool"
@@ -174,9 +174,9 @@ cp .env.example .env
 Fill in the four required values:
 
 ```ini
-NEO4J_URI=neo4j+s://xxxxxxxx.databases.neo4j.io
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=your-password
+COGNODB_URI=bolt+s://<instance-id>.databases.cognodb.cloud
+COGNODB_USERNAME=cognodb
+COGNODB_PASSWORD=your-password
 GEIGER_CONTACT_EMAIL=you@university.edu
 ```
 
@@ -208,7 +208,7 @@ curl http://localhost:3000/api/health
 ```json
 { "status": "ok",
   "checks": {
-    "neo4j":  { "ok": true, "detail": "...databases.neo4j.io:7687" },
+    "cognodb":  { "ok": true, "detail": "...databases.cognodb.cloud:7687" },
     "corpus": { "ok": true, "detail": "1773 papers, 7406 citations" } },
   "scoreVersion": "geiger-contamination-1.0.0" }
 ```
@@ -333,7 +333,7 @@ citation-visualizer/
 │   ├── ingest.ts                 the pipeline: schema → crawl → enrich → score
 │   ├── status.ts                 corpus health and worst-affected papers
 │   ├── inspect.ts                one paper, end to end
-│   ├── setup-neo4j.ts            standalone constraint creation
+│   ├── setup-cognodb.ts            standalone constraint creation
 │   └── lib/env.ts                dotenv bootstrap + flag parsing
 │
 ├── src/
@@ -377,7 +377,7 @@ citation-visualizer/
 │       │   ├── persist.ts        upserts + batch scoring
 │       │   └── enrich.ts         retraction enrichment
 │       ├── db/
-│       │   ├── driver.ts         pooled Neo4j driver
+│       │   ├── driver.ts         pooled CognoDB driver
 │       │   ├── schema.ts         constraints and indexes
 │       │   ├── mappers.ts        node ⇄ domain type
 │       │   └── queries/          paper graph, search, stats
@@ -445,9 +445,9 @@ affects a published number is hardcoded anywhere else.
 
 | Variable | Purpose |
 | --- | --- |
-| `NEO4J_URI` | e.g. `neo4j+s://xxxx.databases.neo4j.io` or `bolt://localhost:7687` |
-| `NEO4J_USERNAME` | |
-| `NEO4J_PASSWORD` | |
+| `COGNODB_URI` | e.g. `bolt+s://xxxx.databases.cognodb.cloud` or `bolt://localhost:7687` |
+| `COGNODB_USERNAME` | |
+| `COGNODB_PASSWORD` | |
 | `GEIGER_CONTACT_EMAIL` | Sent to OpenAlex and Crossref for the polite pool |
 
 ### Model coefficients
@@ -480,8 +480,8 @@ Changing any of these changes published numbers — bump `SCORE_VERSION` in
 | `GEIGER_RATELIMIT_BIB_MAX` | `6` | Bibliography checks per minute |
 | `GEIGER_REQUEST_INTERVAL_MS` | `110` | Pacing between upstream API calls |
 | `GEIGER_MAX_RETRIES` | `4` | Upstream retry attempts |
-| `NEO4J_DATABASE` | instance default | |
-| `NEO4J_POOL_SIZE` | `25` | Connection pool size |
+| `COGNODB_DATABASE` | instance default | |
+| `COGNODB_POOL_SIZE` | `25` | Connection pool size |
 
 ---
 
