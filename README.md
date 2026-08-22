@@ -1,203 +1,112 @@
-# Project Geiger
-
-Traces citations forward from retracted and disputed papers to show what they
-contaminated — and how much of that happened *after* the retraction notice was
-published.
-
-The premise is that a citation graph alone does not tell you much. What matters
-is whether a paper's evidential base rests on work that was later withdrawn, how
-directly, and whether the citing authors could have known at the time.
+<div align="center">
+  <h1>☢️ Project Geiger</h1>
+  <p><strong>Mapping the Blast Radius of Retracted Science</strong></p>
+</div>
 
 ---
 
-## What it does
+## 🚨 The Problem: The Zombie Science Epidemic
+When a scientific paper is retracted, it doesn't just disappear. If the paper was highly cited, its findings have already seeped into the literature, creating a cascade of "zombie science". 
 
-- **Search** any paper by DOI, OpenAlex ID, PMID, arXiv ID, title or author.
-  Papers not yet in the corpus are crawled from OpenAlex on demand.
-- **Contamination scoring** — a documented, versioned model (not a placeholder)
-  that weighs citation timing, reference-list size, notice severity and apparent
-  citation intent.
-- **Explanations** — every score can be expanded into the actual citation chains
-  that produced it, hop by hop.
-- **Bibliography checking** — upload a `.bib`, `.ris`, DOI list or pasted
-  reference list and get every entry checked, including references that are clean
-  themselves but rest on flagged work.
-- **Graph visualisation** offering both a classic 2D timeline layout (y-axis = publication year) and an immersive **3D Galaxy WebGL** layout. Features include shortest-path highlighting (Trace to Source), time-lapse animations of contamination spread, and a distinct **Author Network** mode for tracing co-author clusters.
-- **AI Citation Context Analysis** using a local NLP pipeline to identify the exact sentiment and context of citations (e.g. refutational vs. supporting).
-- **Exports** — CSV, GraphML (Gephi/Cytoscape), BibTeX, RIS, full JSON, and comprehensive **PDF Reports** capturing the visualisations and analysis.
-- **A public JSON API** with validation, rate limiting and cache headers.
+Surprisingly, **millions of citations** continue to accumulate for retracted papers, meaning researchers are unknowingly building new studies, medical guidelines, and AI models on top of flawed or falsified data. A simple citation graph doesn't tell the whole story: *Did the citing author know it was retracted? Were they refuting it, or relying heavily on it?*
 
-## Quick start
+## 💡 Our Solution: Project Geiger
+**Project Geiger** is a powerful, interactive visualizer and scoring engine that traces citations forward from retracted and disputed papers. It reveals exactly what they contaminated—and how much of that happened *after* the retraction notice was published.
 
+Geiger doesn't just draw lines; it **scores contamination** by weighing citation timing, reference-list size, notice severity, and citation intent. 
+
+---
+
+## ✨ Key Features
+
+### 🕸️ Interactive Visualisations
+- **3D Galaxy WebGL Mode:** Dive into an immersive, interactive 3D universe of citations. Rotate, zoom, and explore complex citation networks dynamically.
+- **2D Timeline Layout:** View citations flowing forward through time (y-axis = publication year). Watch contamination visibly travel forward, with post-notice citations drawn as flashing dashed red edges.
+- **Author Network Mode:** Shift from paper-to-paper networks to author-to-author networks. Discover co-author clusters and track how contamination spreads between specific researchers.
+- **Trace to Source:** Select any paper and instantly highlight the shortest path back to the original retracted source.
+- **Time-Lapse Animation:** Hit play and watch the citation graph evolve year-by-year, telling the story of a paper's influence over time.
+
+### 🧠 Deep Data & AI
+- **AI Citation Context Analysis (NLP):** Hover over a citation edge to see exactly *how* a paper was cited. Our local NLP pipeline classifies the sentiment—was the citing author supporting the retracted work, or refuting it?
+- **Global Search:** Hit `⌘K` anywhere to search for any paper by DOI, OpenAlex ID, PMID, arXiv ID, title, or author. Missing papers are automatically crawled on demand!
+- **Intelligent Scoring Engine:** Computes a "contamination score" based on chronological timing, reliance dose, and notice severity.
+
+### 🛠️ Professional Tools
+- **Bibliography Checker:** Upload a `.bib`, `.ris`, DOI list, or paste a reference list to scan your entire bibliography. Find out if any of your "clean" references secretly rest on flagged work.
+- **Comprehensive Exports:** Generate beautiful, print-ready **PDF Reports**, or export data to CSV, GraphML (for Gephi/Cytoscape), BibTeX, RIS, and full JSON.
+- **Public JSON API:** Full REST API with validation, rate limiting, and cache headers for developers.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Installation
 ```bash
 npm install
-cp .env.example .env        # then fill in the values
-npm run ingest -- --seed 10.1038/nature04533
-npm run dev
 ```
 
-`GEIGER_CONTACT_EMAIL` is required. OpenAlex and Crossref both operate a "polite
-pool" with far better rate limits for identified clients, and the pipeline
-refuses to start without a real address rather than crawling anonymously.
+### 2. Configuration
+Copy the environment file and fill in your details:
+```bash
+cp .env.example .env
+```
+*(Note: `GEIGER_CONTACT_EMAIL` is required to access the polite pool for OpenAlex and Crossref APIs.)*
 
-## Environment
+### 3. Build Your First Graph
+Crawl a retracted paper (e.g., the famous Schön scandal paper) to seed your local database:
+```bash
+npm run ingest -- --seed 10.1038/nature04533
+```
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `NEO4J_URI` | yes | Bolt URI, e.g. `neo4j+s://xxxx.databases.neo4j.io` |
-| `NEO4J_USERNAME` | yes | |
-| `NEO4J_PASSWORD` | yes | |
-| `NEO4J_DATABASE` | no | Defaults to the instance default |
-| `NEO4J_POOL_SIZE` | no | Connection pool size (default 25) |
-| `GEIGER_CONTACT_EMAIL` | yes | Sent to OpenAlex and Crossref for the polite pool |
+### 4. Run the Visualizer
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) and watch the blast radius unfold!
 
-Every model coefficient and every limit is also environment-overridable — see
-[`src/lib/config.ts`](src/lib/config.ts), which is the single source of truth.
-Nothing that affects a published number is hardcoded anywhere else.
+---
 
-## The pipeline
+## ⚙️ The Pipeline Engine
+Under the hood, Geiger uses a robust data pipeline to fetch, enrich, and score data.
 
 ```bash
 npm run ingest -- --help
 ```
 
-Four stages, each runnable alone via `--stages`:
-
-| Stage | What it does |
-| --- | --- |
-| `schema` | Constraints, indexes and the fulltext index |
-| `crawl` | Walks citations outward from seed papers |
-| `enrich` | Attaches retraction dates and reasons from Crossref/Retraction Watch |
-| `score` | Recomputes contamination across the whole corpus |
-
+You can run individual stages or batch jobs:
 ```bash
-# One paper and its blast radius
+# Analyze a paper's blast radius to a depth of 2
 npm run ingest -- --seed 10.1038/nature04533 --depth 2 --max-works 800
 
-# Seed from the most-cited retracted works OpenAlex knows about
+# Seed the database with the top 25 most-cited retracted works
 npm run ingest -- --retracted 25 --min-citations 100
 
-# Re-score only (after changing a model coefficient)
+# Re-score the database (e.g. after tweaking the algorithm)
 npm run score
-
-# Corpus health, coverage and the worst-affected papers
-npm run db:status
-
-# Inspect one paper end to end
-npx tsx scripts/inspect.ts 10.1038/nature04533
 ```
 
-Seeds come from the command line or from OpenAlex's retracted-works index. There
-is no hardcoded seed DOI and no magic fan-out constant; every budget is an
-explicit flag with a documented default.
+---
 
-## How the score works
+## 📊 How the Contamination Score Works
 
 ```text
 score(p) = normalise( Σ_r severity(r) · w_time(p,r) · w_reliance(p) · w_intent(p) · decay^(hops−1) )
 ```
 
-| Weight | Rationale |
-| --- | --- |
-| **Timing** | A paper published before a notice could not have known. One published after either missed it or ignored it. This is the strongest signal in the model. |
-| **Reliance** | Citing a retracted work among 8 references differs from citing it among 300. Normalised by reference count. |
-| **Severity** | A retraction emits full dose; an expression of concern less, because the concern may not be upheld. |
-| **Intent** | A paper *writing about* a retraction is not contaminated by it. Metadata heuristic — see limitations. |
+1. **Timing:** Citations published *after* a retraction receive maximum penalty. Citations published *before* could not have known, receiving a lower penalty.
+2. **Reliance:** Citing a retracted work among 8 references is heavily penalized; citing it among 300 references is diluted.
+3. **Severity:** A full retraction emits a full dose. An "expression of concern" emits less.
+4. **Intent:** A paper explicitly *writing about* a retraction (refutational) is not penalized.
 
-Dose decays per hop and stops after 3 generations. The result is mapped to
-0–100 by a saturating curve. Retracted papers are pinned to 100 and labelled as
-sources rather than recipients.
+*Scores are mapped from 0–100. Retracted papers are pinned at 100.*
 
-Scores are computed as a batch job over the whole graph, never per request, and
-every score is stamped with the model version that produced it. Papers fetched
-on demand are scored against the crawled fragment only and marked `+fragment`
-until the next full run.
+---
 
-The full write-up, including the coefficients currently in force, is served at
-`/methods` and at `GET /api/stats`.
+## ⚠️ Limitations & Ethics
+- **A retraction is not an accusation:** Many retractions are requested by honest authors who found an error. Geiger scores citation paths, not people.
+- **Coverage is partial:** The absence of a flag in Geiger does not guarantee a paper is flawless. We bound crawls to prevent infinite fan-out.
+- **Heuristics:** Intent detection is AI/NLP-assisted and based on metadata. It is highly accurate but not a flawless substitute for human reading.
 
-## Limitations
-
-These are stated in the UI as well, because they matter more than the number.
-
-- **Coverage is partial.** The corpus is built by bounded crawling. The absence
-  of a flag is not evidence a paper is sound.
-- **Undated notices weaken the model.** A flagged paper with no notice date
-  forces every citation to it into the "unknown timing" bucket.
-- **Intent detection is a heuristic** over titles, venues and subject terms — not
-  the citing sentence. English-only. A match reduces a score, never zeroes it.
-- **Sampling is bounded.** Highly-cited papers have more citers than any budget
-  holds. Geiger samples half by citation count and half by recency so
-  post-retraction citations are not systematically excluded, but a truncated
-  neighbourhood is still a sample, and the UI says so when it truncates.
-- **A retraction is not an accusation.** Many are issued for honest error or at
-  the authors' request. Geiger scores papers and citation paths, never people.
-
-## API
-
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /api/search?q=` | Local corpus, then OpenAlex |
-| `GET /api/paper/{doi}` | Paper and citation neighbourhood; crawls on demand |
-| `GET /api/paths/{doi}` | The citation chains behind a score |
-| `GET /api/export/{doi}?format=` | `csv`, `graphml`, `bibtex`, `ris`, `json` |
-| `POST /api/bibliography` | Bulk reference check |
-| `GET /api/stats` | Corpus counts and the live model parameters |
-| `GET /api/health` | Liveness; reports `degraded` on an empty or unscored corpus |
-
-Graph queries accept `direction` (`downstream`/`upstream`/`both`), `depth`,
-`limit`, `yearFrom`, `yearTo`, `minScore` and `status`.
-
-```bash
-curl "localhost:3000/api/paper/10.1038/nature04533?direction=downstream&depth=2"
-curl -X POST localhost:3000/api/bibliography \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"10.1038/nature04533","deep":true}'
-```
-
-## Development
-
-```bash
-npm run dev         # dev server
-npm test            # unit tests
-npm run typecheck   # tsc --noEmit
-npm run lint
-npm run build
-```
-
-The scoring model, source reconciliation, bibliography parser and export
-formats are pure modules with unit tests — those are the parts whose output
-people are asked to trust, so they are testable without a database.
-
-## Architecture
-
-```text
-src/lib/
-  config.ts              every tunable, env-overridable
-  types.ts               domain types (4-state integrity status, not a boolean)
-  scoring/               the contamination model — pure and tested
-  sources/               OpenAlex, Crossref, multi-source reconciliation
-  ingest/                crawl, persist, enrich, score
-  db/                    driver, schema, mappers, queries
-  bibliography/          parsing and checking
-  export/                CSV, GraphML, BibTeX, RIS, JSON
-  api/                   validation, rate limiting, error shaping
-scripts/
-  ingest.ts              the pipeline CLI
-  status.ts              corpus health
-  inspect.ts             one paper, end to end
-```
-
-Citations are stored as `(citing)-[:CITES]->(cited)`. Downstream — the
-contamination direction — is therefore everything pointing **at** a paper.
-
-## Data sources and licensing
-
-- [OpenAlex](https://openalex.org) — CC0. Bibliographic metadata and the
-  citation graph.
-- [Crossref](https://www.crossref.org) / Retraction Watch — CC0 since 2023.
-  Retraction and expression-of-concern notices with dates and reasons.
-
-Where sources disagree, Geiger keeps the most severe status asserted by any of
-them and dates it from the earliest notice of any kind. A source with no record
-is treated as silent, never as an all-clear.
+## 📄 Licensing & Data Sources
+- [OpenAlex](https://openalex.org) (CC0) — Bibliographic metadata and the citation graph.
+- [Crossref](https://www.crossref.org) / Retraction Watch (CC0) — Retraction notices, dates, and reasons.
